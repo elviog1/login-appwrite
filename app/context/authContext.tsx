@@ -1,55 +1,88 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import type { Models } from "react-native-appwrite";
 import * as auth from "../lib/auth";
 
 type User = Models.User<Models.Preferences>;
+
 type AuthContextType = {
-  user: any;
+  user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (name: string, email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType>({} as AuthContextType);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const syncUser = async () => {
-    const currentUser = await auth.getCurrentUser();
-    setUser(currentUser);
-  };
+
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await auth.getCurrentUser();
+      setUser(currentUser);
+    } catch {
+      setUser(null);
+    }
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      await syncUser();
+    const initAuth = async () => {
+      await refreshUser();
       setLoading(false);
-    })();
-  }, []);
+    };
+
+    initAuth();
+  }, [refreshUser]);
 
   const signIn = async (email: string, password: string) => {
     await auth.login(email, password);
-    await syncUser();
+    await refreshUser();
   };
 
   const signUp = async (name: string, email: string, password: string) => {
     await auth.register(name, email, password);
-    await syncUser();
+    await refreshUser();
   };
 
   const signOut = async () => {
     try {
       await auth.logout();
-    } catch {}
-    setUser(null);
+    } finally {
+      setUser(null);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        refreshUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
+  }
+
+  return context;
+};
