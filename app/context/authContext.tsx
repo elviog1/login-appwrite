@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import {
   createContext,
   useCallback,
@@ -6,6 +7,7 @@ import {
   useState,
 } from "react";
 import type { Models } from "react-native-appwrite";
+import { account } from "../lib/appwrite";
 import * as auth from "../lib/auth";
 
 type User = Models.User<Models.Preferences>;
@@ -24,7 +26,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const router = useRouter();
   const refreshUser = useCallback(async () => {
     try {
       const currentUser = await auth.getCurrentUser();
@@ -56,10 +58,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = async () => {
     try {
       await auth.logout();
+      setUser(null);
+      router.replace("/");
     } finally {
       setUser(null);
     }
   };
+
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const session = await account.get();
+        setUser(session);
+      } catch {
+        setUser(null);
+      }
+    };
+
+    checkSession();
+  }, []);
 
   return (
     <AuthContext.Provider

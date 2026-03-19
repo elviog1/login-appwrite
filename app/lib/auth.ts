@@ -2,7 +2,7 @@ import { ID } from "react-native-appwrite";
 import { account } from "./appwrite";
 
 export const register = (name: string, email: string, password: string) =>
-  account.create({ userId: ID.unique(), email, password });
+  account.create({ userId: ID.unique(), email, password, name });
 
 export const login = async (email: string, password: string) => {
   try {

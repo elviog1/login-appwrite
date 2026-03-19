@@ -17,7 +17,7 @@ export default function RegisterScreen() {
       await register(name, email, password);
       showSnackbar("Account created successfully", "success");
       setTimeout(() => {
-        router.replace("/login");
+        router.replace("/");
       }, 1500);
     } catch (error) {
       showSnackbar("Error creating account", "error");
