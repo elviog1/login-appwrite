@@ -20,11 +20,16 @@ export const createMarker = async (marker: any) => {
 };
 
 export const getMarkers = async (userId: string) => {
-  const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-    Query.equal("userId", userId), // 🔥 FILTRO CLAVE
-  ]);
+  try {
+    const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
+      Query.equal("userId", userId),
+    ]);
 
-  return response.documents;
+    return response.documents;
+  } catch (error) {
+    console.log("Error getting markers:", error);
+    return []; // 🔥 MUY IMPORTANTE
+  }
 };
 
 export const deleteMarker = async (markerId: string) => {

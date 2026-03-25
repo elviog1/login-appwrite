@@ -33,7 +33,10 @@ export const useMarkers = (user: any) => {
 
     try {
       const docs = await getMarkers(user.$id);
-      if (!docs) return;
+      if (!docs || !Array.isArray(docs)) {
+        setMarkers([]);
+        return;
+      }
 
       const formatted: MarkerType[] = docs.map((doc: any) => ({
         id: doc.$id,

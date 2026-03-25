@@ -39,13 +39,15 @@ export default function LoginScreen() {
 
     try {
       await signIn(email, password);
-      router.replace("/home");
+      //router.replace("/home");
     } catch (err: any) {
       if (err.message.includes("Invalid credentials")) {
         setError("Email o contraseña incorrectos");
         return;
       }
       setError(err.message);
+    } finally {
+      setLogginIn(false);
     }
   };
 
@@ -67,6 +69,7 @@ export default function LoginScreen() {
         secureTextEntry
         style={styles.input}
       />
+      <Text style={{ color: "red", marginBottom: 10 }}>{error}</Text>
 
       <Button mode="contained" style={styles.button} onPress={handleLogin}>
         Login

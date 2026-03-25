@@ -1,13 +1,12 @@
 import React, { useEffect, useRef, useState } from "react";
 import { StyleSheet, View } from "react-native";
-import MapView from "react-native-maps";
-
 import { FloatingButtons } from "../components/FloatingButtons";
 import { Header } from "../components/Header";
-import { MapViewComponent } from "../components/MapViewComponent";
+import { MapViewComponent, MapViewRef } from "../components/MapViewComponent2";
 import { MarkerModal } from "../components/MarkerModal";
 import { SearchBar } from "../components/SearchBar";
 
+import { ActivityIndicator, Text } from "react-native-paper";
 import { useAuth } from "../context/authContext";
 import { useMarkers } from "../hooks/useMarkers";
 
@@ -18,7 +17,7 @@ export default function App() {
 
   const [isMarking, setIsMarking] = useState(false);
   const [selectedMarkerId, setSelectedMarkerId] = useState<string | null>(null);
-
+  const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedCoordinate, setSelectedCoordinate] = useState<any>(null);
 
@@ -31,8 +30,7 @@ export default function App() {
 
   const [search, setSearch] = useState("");
 
-  const mapRef = useRef<MapView>(null);
-
+  const mapRef = useRef<MapViewRef>(null);
   const ICONS = [
     "map-marker",
     "home",
@@ -45,7 +43,17 @@ export default function App() {
   ];
 
   useEffect(() => {
-    loadMarkers();
+    const init = async () => {
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      await loadMarkers();
+      setLoading(false);
+    };
+
+    init();
   }, [user]);
 
   const addMarkerOnMap = (event: any) => {
@@ -113,6 +121,11 @@ export default function App() {
 
       const data = await response.json();
 
+      if (!data || data.length === 0) {
+        setError("No se encontró el lugar");
+        return;
+      }
+
       const place = data[0];
 
       const latitude = parseFloat(place.lat);
@@ -148,13 +161,32 @@ export default function App() {
     }
   };
 
+  if (!user) {
+    return (
+      <View style={styles.center}>
+        <Text style={styles.text}>
+          Debes iniciar sesión para usar la aplicación
+        </Text>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" />
+        <Text style={styles.text}>Cargando aplicación...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Header onLogout={signOut} />
 
       <MapViewComponent
         markers={markers}
-        mapRef={mapRef}
+        ref={mapRef}
         isMarking={isMarking}
         onMapPress={addMarkerOnMap}
         onMarkerPress={(id) => setSelectedMarkerId(id)}
@@ -217,4 +249,14 @@ export default function App() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  center: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
+  text: {
+    marginTop: 10,
+    fontSize: 16,
+  },
 });

@@ -4,9 +4,9 @@ import "react-native-url-polyfill/auto";
 export const client = new Client();
 
 client
-  .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT!)
-  .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID!)
-  .setPlatform(process.env.EXPO_PUBLIC_APPWRITE_SETPLATFORM!);
+  .setEndpoint("https://cloud.appwrite.io/v1")
+  .setProject("69aa1cba0002c9d29793")
+  .setPlatform("com.marking.app");
 
 export const account = new Account(client);
 export const databases = new Databases(client);
