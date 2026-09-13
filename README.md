@@ -1,50 +1,119 @@
-# Welcome to your Expo app 👋
+# 🌳 Family Tree App (Árbol Genealógico)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicación móvil multiplataforma desarrollada con **React Native**, **Expo (Router)** y **Appwrite**, diseñada para gestionar y estructurar árboles genealógicos familiares de manera jerárquica y visual.
 
-## Get started
+---
 
-1. Install dependencies
+## 🚀 Características Principales
 
+- 🔐 **Autenticación Completa**: Registro, inicio de sesión, cierre de sesión y cambio de contraseña mediante Appwrite Auth.
+- 🌳 **Gestión del Árbol Genealógico**:
+  - Creación de personas raíz (antepasados).
+  - Adición dinámica de descendientes recursivos.
+  - Edición y eliminación de miembros.
+  - Cálculo dinámico de edad según fecha de nacimiento.
+- 🎨 **Interfaz con Material Design**: Integración de `react-native-paper` con soporte para **Modo Claro / Oscuro**.
+- 📊 **Estadísticas de la Familia**: Resumen de total de miembros, personas raíz y descendientes en la pantalla de perfil.
+- 📱 **Soporte Multiplataforma**: Android, iOS y Web con Expo.
+
+---
+
+## 🛠️ Stack Tecnológico
+
+| Tecnología | Descripción |
+| :--- | :--- |
+| **React Native** (0.86) | Framework de desarrollo móvil |
+| **Expo** (SDK 57) | Plataforma y herramientas universales |
+| **Expo Router** (v57) | Navegación basada en el sistema de archivos |
+| **Appwrite** (`react-native-appwrite`) | Backend as a Service (Autenticación y Base de Datos) |
+| **React Native Paper** (v5) | Componentes visuales Material Design 3 |
+| **TypeScript** (v6) | Tipado estático y robustez |
+
+---
+
+## 📁 Estructura del Proyecto
+
+```text
+loginapp/
+├── app/                      # Rutas de Expo Router
+│   ├── (tabs)/               # Vistas protegidas por pestañas
+│   │   ├── _layout.tsx       # Barra de navegación inferior
+│   │   ├── home.tsx          # Vista principal del árbol genealógico
+│   │   └── profile.tsx       # Perfil del usuario y estadísticas
+│   ├── _layout.tsx           # Layout raíz con Proveedores de Contexto
+│   ├── index.tsx             # Pantalla de Login
+│   └── register.tsx          # Pantalla de Registro
+├── components/               # Componentes reutilizables
+│   ├── AppHeader.tsx         # Barra superior con selector de tema
+│   ├── NotificationSnackbar.tsx # Notificaciones toast
+│   ├── Personmodals.tsx      # Modal de creación y edición de personas
+│   └── TreeNode.tsx          # Renderizado recursivo de nodos del árbol
+├── contexts/                 # Estado global (Context API)
+│   ├── auth-context.tsx      # Estado de sesión y usuario
+│   ├── theme-context.tsx     # Manejo del tema oscuro/claro
+│   └── tree-context.tsx      # Estado global del árbol
+├── hooks/                    # Custom Hooks
+│   └── useNotification.ts    # Disparador unificado de alertas
+├── lib/                      # Servicios y utilidades
+│   ├── appwrite.ts           # Configuración del cliente Appwrite
+│   ├── auth.ts               # Métodos de autenticación
+│   ├── date.utils.ts         # Cálculo y formato de fechas
+│   ├── personService.ts      # CRUD y algoritmo de construcción del árbol
+│   └── validatorEmail.ts     # Validadores de formulario
+└── package.json              # Configuración y dependencias
+```
+
+---
+
+## ⚙️ Configuración y Variables de Entorno
+
+Crea un archivo `.env` o `.env.local` en la raíz del proyecto:
+
+```env
+EXPO_PUBLIC_APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+EXPO_PUBLIC_APPWRITE_PROJECT_ID=tu_project_id
+EXPO_PUBLIC_DATABASE_ID=tu_database_id
+EXPO_PUBLIC_COLLECTION_ID=tu_collection_id
+```
+
+### 🗄️ Estructura de la Colección en Appwrite (`Persons`)
+
+| Atributo | Tipo | Requerido | Descripción |
+| :--- | :--- | :--- | :--- |
+| `firstName` | `String` | Sí | Nombre de la persona |
+| `lastName` | `String` | Sí | Apellido |
+| `birthDate` | `String` (YYYY-MM-DD) | Sí | Fecha de nacimiento |
+| `description` | `String` | No | Datos adicionales / biografía |
+| `parentId` | `String` | No (nullable) | ID de la persona padre (null si es raíz) |
+| `userId` | `String` | Sí | ID del usuario propietario para aislar datos |
+
+---
+
+## 🚀 Instalación y Ejecución
+
+1. **Instalar dependencias:**
    ```bash
    npm install
    ```
 
-2. Start the app
-
+2. **Iniciar el servidor de desarrollo Expo:**
    ```bash
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+3. **Ejecutar en plataforma deseada:**
+   - Presiona `a` para emulador Android.
+   - Presiona `i` para simulador iOS.
+   - Presiona `w` para navegador Web.
+   - O escanea el código QR con la aplicación **Expo Go**.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 📜 Scripts Disponibles
 
-## Get a fresh project
+- `npm run start`: Inicia Expo Dev Server.
+- `npm run android`: Ejecuta en Android.
+- `npm run ios`: Ejecuta en iOS.
+- `npm run web`: Ejecuta en la Web.
+- `npm run lint`: Ejecuta el análisis estático de ESLint.
 
-When you're ready, run:
-
-```bash
-npm run reset-project
-```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
