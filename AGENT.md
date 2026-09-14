@@ -5,6 +5,7 @@ Este documento describe la arquitectura, decisiones de diseño, convenciones de 
 ---
 
 ## 🎯 Propósito del Proyecto
+
 Una aplicación móvil construida con **React Native + Expo** conectada a **Appwrite**, orientada a registrar árboles genealógicos familiares. Los usuarios pueden autenticarse y construir estructuras jerárquicas de personas (raíces y descendientes recursivos).
 
 ---
@@ -12,6 +13,7 @@ Una aplicación móvil construida con **React Native + Expo** conectada a **Appw
 ## 🏗️ Arquitectura y Patrones
 
 ### 1. Enrutamiento (Expo Router v6)
+
 - Basado en el directorio `/app`.
 - **Rutas públicas**: `/index.tsx` (Login), `/register.tsx` (Registro).
 - **Rutas privadas/autenticadas**: `/app/(tabs)/`
@@ -20,6 +22,7 @@ Una aplicación móvil construida con **React Native + Expo** conectada a **Appw
 - Layout raíz en `app/_layout.tsx` encapsula los Providers de React Context.
 
 ### 2. Capa de Datos y Backend (Appwrite)
+
 - **Cliente**: Configurado en `lib/appwrite.ts`.
 - **Servicio de Personas**: `lib/personService.ts`
   - Modelo `PersonDocument`: `$id`, `firstName`, `lastName`, `birthDate`, `description`, `parentId`, `userId`.
@@ -27,6 +30,7 @@ Una aplicación móvil construida con **React Native + Expo** conectada a **Appw
   - Función clave `buildFamilyTree(persons: PersonDocument[])`: Transforma la lista plana de Appwrite en una estructura de árbol en memoria (Map O(N)).
 
 ### 3. Componentes UI y Visualización
+
 - **`TreeNode.tsx`**: Componente recursivo que renderiza la tarjeta del nodo y sus descendientes al expandir.
 - **`Personmodals.tsx`**: Diálogos unificados para crear miembros raíz o descendientes y editar personas existentes.
 - **`NotificationSnackbar.tsx`**: Mensajes flotantes de confirmación / error.
