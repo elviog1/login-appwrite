@@ -31,17 +31,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await auth.login(email, password);
+    try {
+      await auth.logout();
+    } catch {
+      // Ignorar si no había sesión previa
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    await auth.login(cleanEmail, password);
     await syncUser();
   };
 
   const signUp = async (email: string, password: string) => {
-    await auth.register(email, password);
+    try {
+      await auth.logout();
+    } catch {
+      // Ignorar si no había sesión previa
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    await auth.register(cleanEmail, password);
+    await auth.login(cleanEmail, password);
     await syncUser();
   };
 
   const signOut = async () => {
-    await auth.logout();
+    try {
+      await auth.logout();
+    } catch {
+      // Ignorar
+    }
     setUser(null);
   };
 

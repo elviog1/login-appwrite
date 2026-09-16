@@ -1,8 +1,5 @@
 {
   "name": "loginapp",
-  "overrides": {
-    "expo-file-system": "19.0.21"
-  },
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
@@ -22,6 +19,7 @@
     "@react-navigation/native-stack": "^7.3.16",
     "expo": "^57.0.0",
     "expo-constants": "~57.0.18",
+    "expo-file-system": "~57.0.7",
     "expo-font": "~57.0.4",
     "expo-haptics": "~57.0.3",
     "expo-image": "~57.0.5",

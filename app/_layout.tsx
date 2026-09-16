@@ -1,3 +1,4 @@
+import "react-native-url-polyfill/auto";
 import { AuthProvider } from "@/contexts/auth-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 import { TreeProvider } from "@/contexts/tree-context";

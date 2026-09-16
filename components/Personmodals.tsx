@@ -1,14 +1,22 @@
 import { Person } from "@/lib/personService";
 import DateTimePicker from "@react-native-community/datetimepicker";
-import React, { useEffect, useState } from "react";
-import { Platform, ScrollView, StyleSheet } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  Keyboard,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from "react-native";
 import {
   Button,
-  Dialog,
   HelperText,
+  Modal,
   Portal,
+  Surface,
   Text,
   TextInput,
+  useTheme,
 } from "react-native-paper";
 
 interface PersonFormModalProps {
@@ -35,6 +43,7 @@ export function PersonFormModal({
   onDelete,
   error,
 }: PersonFormModalProps) {
+  const theme = useTheme();
   const isEdit = mode === "edit";
 
   const [firstName, setFirstName] = useState("");
@@ -67,6 +76,7 @@ export function PersonFormModal({
   };
 
   const handleSave = () => {
+    Keyboard.dismiss();
     if (!firstName.trim() || !lastName.trim()) return;
 
     onSave({
@@ -84,20 +94,50 @@ export function PersonFormModal({
     }
   };
 
+  const handleClose = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
+
+  const handleDelete = () => {
+    Keyboard.dismiss();
+    if (onDelete) {
+      onDelete();
+    }
+  };
+
   return (
     <Portal>
-      <Dialog visible={visible} onDismiss={onClose} style={styles.dialog}>
-        <Dialog.Title>
-          {isEdit ? "Editar Persona" : "Agregar Nueva Persona"}
-        </Dialog.Title>
+      <Modal
+        visible={visible}
+        onDismiss={handleClose}
+        contentContainerStyle={styles.modalOverlay}
+      >
+        <Surface
+          style={[
+            styles.surfaceCard,
+            { backgroundColor: theme.colors.elevation.level3 },
+          ]}
+          elevation={4}
+        >
+          {/* Header / Título */}
+          <Text variant="titleLarge" style={styles.title}>
+            {isEdit ? "Editar Persona" : "Agregar Nueva Persona"}
+          </Text>
 
-        <Dialog.ScrollArea>
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Formulario scrolleable */}
+          <ScrollView
+            style={styles.scrollArea}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="always"
+            showsVerticalScrollIndicator={false}
+          >
             <TextInput
               label="Nombre"
               value={firstName}
               onChangeText={setFirstName}
               mode="outlined"
+              dense
               maxLength={50}
               style={styles.input}
             />
@@ -107,6 +147,7 @@ export function PersonFormModal({
               value={lastName}
               onChangeText={setLastName}
               mode="outlined"
+              dense
               maxLength={50}
               style={styles.input}
             />
@@ -115,15 +156,22 @@ export function PersonFormModal({
               label="Fecha de nacimiento"
               value={date.toLocaleDateString("es-AR")}
               mode="outlined"
+              dense
               style={styles.input}
               editable={false}
               right={
                 <TextInput.Icon
                   icon="calendar"
-                  onPress={() => setShowPicker(true)}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    setShowPicker(true);
+                  }}
                 />
               }
-              onPressIn={() => setShowPicker(true)}
+              onPressIn={() => {
+                Keyboard.dismiss();
+                setShowPicker(true);
+              }}
             />
 
             {showPicker && (
@@ -150,8 +198,9 @@ export function PersonFormModal({
                 }
               }}
               mode="outlined"
+              dense
               multiline
-              numberOfLines={3}
+              numberOfLines={2}
               maxLength={200}
               style={styles.input}
             />
@@ -164,36 +213,90 @@ export function PersonFormModal({
               </HelperText>
             )}
           </ScrollView>
-        </Dialog.ScrollArea>
 
-        <Dialog.Actions>
-          {isEdit && onDelete && (
-            <Button onPress={onDelete} textColor="red">
-              Eliminar
-            </Button>
-          )}
-          <Button onPress={onClose}>Cancelar</Button>
-          <Button onPress={handleSave}>{isEdit ? "Guardar" : "Crear"}</Button>
-        </Dialog.Actions>
-      </Dialog>
+          {/* Botones de Acción dentro de la tarjeta */}
+          <View style={styles.actionsContainer}>
+            {isEdit && onDelete && (
+              <Button
+                onPress={handleDelete}
+                textColor="#d32f2f"
+                style={styles.deleteButton}
+              >
+                Eliminar
+              </Button>
+            )}
+            <View style={styles.rightButtons}>
+              <Button onPress={handleClose}>Cancelar</Button>
+              <Button
+                mode="contained"
+                onPress={handleSave}
+                style={styles.saveBtn}
+              >
+                {isEdit ? "Guardar" : "Crear"}
+              </Button>
+            </View>
+          </View>
+        </Surface>
+      </Modal>
     </Portal>
   );
 }
 
 const styles = StyleSheet.create({
-  dialog: {
-    maxHeight: "80%",
+  modalOverlay: {
+    paddingHorizontal: 16,
+    justifyContent: "center", // 👈 Centrado en el medio de la pantalla
+    alignItems: "center",
+    height: "100%",
+  },
+  surfaceCard: {
+    width: "100%",
+    maxWidth: 400,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 18,
+  },
+  title: {
+    fontWeight: "700",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  scrollArea: {
+    // Sin límite restrictivo de altura para que se muestre todo sin scrollear
   },
   scrollContent: {
-    paddingHorizontal: 24,
+    paddingVertical: 2,
   },
   input: {
-    marginBottom: 12,
+    marginBottom: 10,
   },
   counter: {
     textAlign: "right",
-    marginBottom: 12,
+    marginBottom: 4,
     opacity: 0.6,
-    fontSize: 12,
+    fontSize: 11,
+  },
+  actionsContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 16,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "rgba(150, 150, 150, 0.25)",
+  },
+  deleteButton: {
+    marginRight: "auto",
+  },
+  rightButtons: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginLeft: "auto",
+    gap: 8,
+  },
+  saveBtn: {
+    borderRadius: 12,
+    paddingHorizontal: 8,
   },
 });

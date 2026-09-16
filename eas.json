@@ -1,0 +1,39 @@
+{
+  "cli": {
+    "version": ">= 12.0.0"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_PROJECT_ID": "697992680031f91b31f1",
+        "EXPO_PUBLIC_PLATFORM": "com.ideas",
+        "EXPO_PUBLIC_DATABASE_ID": "697e3ddb003700081cce",
+        "EXPO_PUBLIC_COLLECTION_ID": "persons"
+      }
+    },
+    "production": {
+      "android": {
+        "buildType": "apk"
+      },
+      "env": {
+        "EXPO_PUBLIC_ENDPOINT": "https://fra.cloud.appwrite.io/v1",
+        "EXPO_PUBLIC_PROJECT_ID": "697992680031f91b31f1",
+        "EXPO_PUBLIC_PLATFORM": "com.ideas",
+        "EXPO_PUBLIC_DATABASE_ID": "697e3ddb003700081cce",
+        "EXPO_PUBLIC_COLLECTION_ID": "persons"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
