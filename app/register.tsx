@@ -1,4 +1,5 @@
-import { register } from "@/lib/auth";
+import { useAuth } from "@/contexts/auth-context";
+import { isUsernameAvailable } from "@/lib/auth";
 import { isValidEmail } from "@/lib/validatorEmail";
 import { useRouter } from "expo-router";
 import { useState } from "react";
@@ -16,7 +17,9 @@ import {
 export default function RegisterScreen() {
   const router = useRouter();
   const theme = useTheme();
+  const { signUp } = useAuth();
 
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -26,8 +29,19 @@ export default function RegisterScreen() {
   const handleRegister = async () => {
     setError(null);
 
-    if (!email.trim() || !password) {
+    const cleanUsername = username.trim();
+    if (!cleanUsername || !email.trim() || !password) {
       setError("Por favor, completa todos los campos");
+      return;
+    }
+
+    // Appwrite userId rules: 1-36 characters, lowercase/uppercase letters, numbers, period, hyphen, underscore.
+    // Cannot start with a special character.
+    const usernameRegex = /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,35}$/;
+    if (!usernameRegex.test(cleanUsername)) {
+      setError(
+        "El usuario debe tener entre 3 y 36 caracteres, comenzar con letra o número, y solo usar letras, números, '.', '_' o '-'"
+      );
       return;
     }
 
@@ -43,11 +57,20 @@ export default function RegisterScreen() {
 
     try {
       setLoading(true);
-      await register(email.trim(), password);
+      const available = await isUsernameAvailable(cleanUsername);
+      if (!available) {
+        setError("El nombre de usuario ya se encuentra en uso por otra persona");
+        return;
+      }
+
+      await signUp(email.trim(), password, cleanUsername);
       router.replace("/(tabs)/home");
     } catch (err: any) {
-      if (err.message && err.message.includes("already exists")) {
-        setError("Ya existe una cuenta con este email");
+      if (
+        (err.message && err.message.toLowerCase().includes("already exists")) ||
+        err.code === 409
+      ) {
+        setError("El nombre de usuario o el email ya se encuentra en uso");
         return;
       }
       setError(err.message || "Error al crear la cuenta");
@@ -79,6 +102,18 @@ export default function RegisterScreen() {
 
         <Card style={styles.card} mode="elevated">
           <Card.Content style={styles.cardBody}>
+            <TextInput
+              label="Nombre de usuario"
+              value={username}
+              onChangeText={(text) => setUsername(text.replace(/\s+/g, ""))}
+              autoCapitalize="none"
+              autoCorrect={false}
+              mode="outlined"
+              maxLength={36}
+              left={<TextInput.Icon icon="account-outline" />}
+              style={styles.input}
+            />
+
             <TextInput
               label="Correo electrónico"
               value={email}

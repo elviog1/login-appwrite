@@ -56,10 +56,15 @@ export function PersonFormModal({
   useEffect(() => {
     if (visible) {
       if (isEdit && person) {
-        setFirstName(person.firstName);
-        setLastName(person.lastName);
+        setFirstName(person.firstName || "");
+        setLastName(person.lastName || "");
         setDescription(person.description || "");
-        setDate(person.birthDate ? new Date(person.birthDate) : new Date());
+        if (person.birthDate) {
+          const parsed = new Date(person.birthDate);
+          setDate(!isNaN(parsed.getTime()) ? parsed : new Date());
+        } else {
+          setDate(new Date());
+        }
       } else {
         // Reset modo create
         setFirstName("");
@@ -70,9 +75,9 @@ export function PersonFormModal({
     }
   }, [person, visible, isEdit]);
 
-  // ✅ Formato YYYY-MM-DD para backend
+  // ✅ Formato ISO-8601 completo requerido por Appwrite para atributos datetime
   const formatDateForBackend = (date: Date) => {
-    return date.toISOString().split("T")[0];
+    return date.toISOString();
   };
 
   const handleSave = () => {
@@ -135,20 +140,22 @@ export function PersonFormModal({
             <TextInput
               label="Nombre"
               value={firstName}
-              onChangeText={setFirstName}
+              onChangeText={(text) => setFirstName(text.slice(0, 20))}
               mode="outlined"
               dense
-              maxLength={50}
+              maxLength={20}
+              right={<TextInput.Affix text={`${firstName.length}/20`} />}
               style={styles.input}
             />
 
             <TextInput
               label="Apellido"
               value={lastName}
-              onChangeText={setLastName}
+              onChangeText={(text) => setLastName(text.slice(0, 20))}
               mode="outlined"
               dense
-              maxLength={50}
+              maxLength={20}
+              right={<TextInput.Affix text={`${lastName.length}/20`} />}
               style={styles.input}
             />
 
@@ -180,9 +187,10 @@ export function PersonFormModal({
                 mode="date"
                 display={Platform.OS === "ios" ? "spinner" : "default"}
                 maximumDate={new Date()}
-                onChange={(_, selectedDate) => {
+                minimumDate={new Date(1900, 0, 1)}
+                onChange={(event, selectedDate) => {
                   setShowPicker(false);
-                  if (selectedDate) {
+                  if (event.type === "set" && selectedDate) {
                     setDate(selectedDate);
                   }
                 }}

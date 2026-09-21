@@ -166,10 +166,58 @@ export async function getPersonCount(userId: string) {
   return response.total;
 }
 
-export const getPersonsByUser = async (userId: string) => {
-  const response = await databases.listDocuments(DATABASE_ID, COLLECTION_ID, [
-    Query.equal("userId", userId),
-  ]);
-
-  return response.documents;
+export type PublicTree = {
+  userId: string;
+  roots: Person[];
+  totalMembers: number;
+  rootName: string;
+  allPersons: PersonDocument[];
 };
+
+// Obtener todos los árboles de otros usuarios
+export async function getAllOtherTrees(currentUserId?: string): Promise<PublicTree[]> {
+  try {
+    const queries = [Query.limit(500)];
+    const response = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTION_ID,
+      queries,
+    );
+    const allPersons = response.documents as unknown as PersonDocument[];
+
+    // Agrupar por userId
+    const userMap = new Map<string, PersonDocument[]>();
+    allPersons.forEach((person) => {
+      if (currentUserId && person.userId === currentUserId) return;
+      if (!userMap.has(person.userId)) {
+        userMap.set(person.userId, []);
+      }
+      userMap.get(person.userId)!.push(person);
+    });
+
+    const publicTrees: PublicTree[] = [];
+    userMap.forEach((persons, uId) => {
+      const roots = buildFamilyTree(persons);
+      const rootName =
+        roots.length > 0
+          ? `${roots[0].firstName} ${roots[0].lastName}`
+          : "Árbol familiar";
+
+      publicTrees.push({
+        userId: uId,
+        roots,
+        totalMembers: persons.length,
+        rootName,
+        allPersons: persons,
+      });
+    });
+
+    return publicTrees;
+  } catch (error) {
+    console.error("Error fetching other trees:", error);
+    return [];
+  }
+}
+
+export const getPersonsByUser = getAllPersons;
+

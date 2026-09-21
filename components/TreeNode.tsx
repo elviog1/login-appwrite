@@ -2,7 +2,7 @@ import { calculateAge } from "@/lib/date.utils";
 import { Person } from "@/lib/personService";
 import React, { useState } from "react";
 import { StyleSheet, TouchableOpacity, View } from "react-native";
-import { Avatar, Card, Chip, IconButton, Text, useTheme } from "react-native-paper";
+import { Avatar, Card, IconButton, Text, useTheme } from "react-native-paper";
 
 interface TreeNodeProps {
   person: Person;
@@ -10,6 +10,7 @@ interface TreeNodeProps {
   onDelete?: (person: Person) => void;
   onCreate?: (parentPerson: Person) => void;
   isRoot?: boolean;
+  readOnly?: boolean;
 }
 
 const TreeNode = ({
@@ -18,6 +19,7 @@ const TreeNode = ({
   onDelete,
   onCreate,
   isRoot = false,
+  readOnly = false,
 }: TreeNodeProps) => {
   const [expanded, setExpanded] = useState(false);
   const theme = useTheme();
@@ -68,18 +70,36 @@ const TreeNode = ({
               />
 
               <View style={styles.cardInfo}>
-                <View style={styles.nameRow}>
-                  <Text variant="titleMedium" style={styles.name} numberOfLines={1}>
-                    {person.firstName} {person.lastName}
+                <View style={styles.nameContainer}>
+                  <Text variant="titleMedium" style={styles.firstName}>
+                    {person.firstName}
                   </Text>
-                  {isRoot && (
-                    <Chip compact style={styles.rootChip} textStyle={styles.rootChipText}>
-                      Raíz
-                    </Chip>
-                  )}
+                  <Text
+                    variant="titleMedium"
+                    style={[styles.lastName, { color: theme.colors.primary }]}
+                  >
+                    {person.lastName}
+                  </Text>
                 </View>
 
                 <View style={styles.metaRow}>
+                  {isRoot && (
+                    <View
+                      style={[
+                        styles.rootBadge,
+                        { backgroundColor: theme.colors.primaryContainer },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.rootBadgeText,
+                          { color: theme.colors.onPrimaryContainer },
+                        ]}
+                      >
+                        Raíz
+                      </Text>
+                    </View>
+                  )}
                   <Text variant="bodySmall" style={styles.ageText}>
                     📅 {age > 0 ? `${age} años` : "Recién nacido / 0 años"}
                   </Text>
@@ -89,7 +109,6 @@ const TreeNode = ({
                   <Text
                     variant="bodySmall"
                     style={styles.description}
-                    numberOfLines={2}
                   >
                     {person.description}
                   </Text>
@@ -97,7 +116,7 @@ const TreeNode = ({
               </View>
 
               <View style={styles.cardActions}>
-                {onEdit && (
+                {!readOnly && onEdit && (
                   <IconButton
                     icon="pencil-outline"
                     size={20}
@@ -132,23 +151,25 @@ const TreeNode = ({
                 </Text>
               )}
 
-              <TouchableOpacity
-                style={styles.quickAddChild}
-                onPress={(e) => {
-                  e.stopPropagation();
-                  onCreate && onCreate(person);
-                }}
-              >
-                <IconButton
-                  icon="account-plus-outline"
-                  size={16}
-                  style={{ margin: 0, padding: 0 }}
-                  iconColor={theme.colors.primary}
-                />
-                <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: "600" }}>
-                  Agregar hijo
-                </Text>
-              </TouchableOpacity>
+              {!readOnly && onCreate && (
+                <TouchableOpacity
+                  style={styles.quickAddChild}
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    onCreate(person);
+                  }}
+                >
+                  <IconButton
+                    icon="account-plus-outline"
+                    size={16}
+                    style={{ margin: 0, padding: 0 }}
+                    iconColor={theme.colors.primary}
+                  />
+                  <Text variant="labelSmall" style={{ color: theme.colors.primary, fontWeight: "600" }}>
+                    Agregar hijo
+                  </Text>
+                </TouchableOpacity>
+              )}
             </View>
           </Card.Content>
         </Card>
@@ -170,29 +191,32 @@ const TreeNode = ({
               onEdit={onEdit}
               onDelete={onDelete}
               onCreate={onCreate}
+              readOnly={readOnly}
             />
           ))}
 
           {/* Botón para agregar nuevo hijo */}
-          <TouchableOpacity
-            style={styles.addButton}
-            onPress={() => onCreate && onCreate(person)}
-            activeOpacity={0.7}
-          >
-            <Card
-              style={[
-                styles.addCard,
-                { borderColor: theme.colors.primary, backgroundColor: theme.colors.elevation.level1 },
-              ]}
+          {!readOnly && onCreate && (
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={() => onCreate(person)}
+              activeOpacity={0.7}
             >
-              <Card.Content style={styles.addCardContent}>
-                <IconButton icon="plus-circle-outline" iconColor={theme.colors.primary} size={24} />
-                <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: "600" }}>
-                  Agregar hijo a {person.firstName}
-                </Text>
-              </Card.Content>
-            </Card>
-          </TouchableOpacity>
+              <Card
+                style={[
+                  styles.addCard,
+                  { borderColor: theme.colors.primary, backgroundColor: theme.colors.elevation.level1 },
+                ]}
+              >
+                <Card.Content style={styles.addCardContent}>
+                  <IconButton icon="plus-circle-outline" iconColor={theme.colors.primary} size={24} />
+                  <Text variant="labelMedium" style={{ color: theme.colors.primary, fontWeight: "600" }}>
+                    Agregar hijo a {person.firstName}
+                  </Text>
+                </Card.Content>
+              </Card>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>
@@ -222,30 +246,35 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
   },
-  nameRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    flexWrap: "wrap",
+  nameContainer: {
+    marginBottom: 4,
   },
-  name: {
-    fontWeight: "700",
-    marginRight: 6,
+  firstName: {
+    fontWeight: "800",
+    letterSpacing: 0.2,
+    lineHeight: 20,
   },
-  rootChip: {
-    height: 20,
-    paddingHorizontal: 0,
-    backgroundColor: "#e0f2fe",
-  },
-  rootChipText: {
-    fontSize: 10,
-    lineHeight: 12,
-    color: "#0369a1",
-    fontWeight: "700",
+  lastName: {
+    fontWeight: "600",
+    letterSpacing: 0.3,
+    lineHeight: 20,
+    marginTop: 1,
   },
   metaRow: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 2,
+    gap: 8,
+  },
+  rootBadge: {
+    paddingHorizontal: 7,
+    paddingVertical: 1.5,
+    borderRadius: 6,
+    alignSelf: "center",
+  },
+  rootBadgeText: {
+    fontSize: 10.5,
+    fontWeight: "700",
   },
   ageText: {
     opacity: 0.75,

@@ -39,6 +39,20 @@ export default function TabsLayout() {
         />
 
         <Tabs.Screen
+          name="explore"
+          options={{
+            title: "Explorar",
+            tabBarIcon: ({ color, size }) => (
+              <MaterialCommunityIcons
+                name="compass-outline"
+                size={size}
+                color={color}
+              />
+            ),
+          }}
+        />
+
+        <Tabs.Screen
           name="profile"
           options={{
             title: "Perfil",

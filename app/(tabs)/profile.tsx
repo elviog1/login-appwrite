@@ -1,5 +1,5 @@
 import { useAuth } from "@/contexts/auth-context";
-import { changePassword } from "@/lib/auth";
+import { changePassword, isUsernameAvailable } from "@/lib/auth";
 import { getPersonsByUser } from "@/lib/personService";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useState } from "react";
@@ -10,15 +10,17 @@ import {
   Card,
   Divider,
   HelperText,
+  IconButton,
   Modal,
   Portal,
+  Surface,
   Text,
   TextInput,
   useTheme,
 } from "react-native-paper";
 
 export default function ProfileScreen() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUserName } = useAuth();
   const router = useRouter();
   const theme = useTheme();
 
@@ -30,6 +32,11 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  const [nameModalVisible, setNameModalVisible] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [nameLoading, setNameLoading] = useState(false);
+  const [nameError, setNameError] = useState<string | null>(null);
 
   const [personCount, setPersonCount] = useState(0);
   const [rootCount, setRootCount] = useState(0);
@@ -101,7 +108,60 @@ export default function ProfileScreen() {
     }, [user]),
   );
 
-  const initialLetter = user?.email ? user.email.charAt(0).toUpperCase() : "U";
+  const openNameModal = () => {
+    setNewName(user?.name || "");
+    setNameError(null);
+    setNameModalVisible(true);
+  };
+
+  const closeNameModal = () => {
+    setNameModalVisible(false);
+    setNameError(null);
+  };
+
+  const handleUpdateName = async () => {
+    setNameError(null);
+    const cleanName = newName.trim();
+    if (!cleanName) {
+      setNameError("El nombre de usuario no puede estar vacío");
+      return;
+    }
+
+    const usernameRegex = /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,35}$/;
+    if (!usernameRegex.test(cleanName)) {
+      setNameError(
+        "El usuario debe tener entre 3 y 36 caracteres, comenzar con letra o número, y solo usar letras, números, '.', '_' o '-'"
+      );
+      return;
+    }
+
+    // Si es igual al nombre actual, simplemente cerramos sin error
+    if (
+      cleanName.toLowerCase() === (user?.name || "").toLowerCase() ||
+      cleanName.toLowerCase() === (user?.$id || "").toLowerCase()
+    ) {
+      closeNameModal();
+      return;
+    }
+
+    try {
+      setNameLoading(true);
+      const available = await isUsernameAvailable(cleanName, user?.$id);
+      if (!available) {
+        setNameError("Ese nombre de usuario ya se encuentra en uso por otra persona");
+        return;
+      }
+
+      await updateUserName(cleanName);
+      closeNameModal();
+    } catch (err: any) {
+      setNameError(err.message || "Error al actualizar el nombre");
+    } finally {
+      setNameLoading(false);
+    }
+  };
+
+  const initialLetter = (user?.name || user?.email || "U").charAt(0).toUpperCase();
 
   return (
     <ScrollView
@@ -109,79 +169,141 @@ export default function ProfileScreen() {
       contentContainerStyle={styles.scrollContent}
     >
       <Portal>
+        {/* Modal Cambiar Nombre */}
+        <Modal
+          visible={nameModalVisible}
+          onDismiss={closeNameModal}
+          contentContainerStyle={styles.modalOverlay}
+        >
+          <Surface
+            style={[
+              styles.surfaceCard,
+              { backgroundColor: theme.colors.elevation.level3 },
+            ]}
+            elevation={4}
+          >
+            <Text variant="titleLarge" style={styles.modalTitle}>
+              Editar nombre de usuario
+            </Text>
+            <Text variant="bodySmall" style={styles.modalSubtitle}>
+              Elige un nombre de usuario único para identificarte
+            </Text>
+
+            <TextInput
+              label="Nombre de usuario"
+              value={newName}
+              onChangeText={(text) => setNewName(text.replace(/\s+/g, ""))}
+              autoCapitalize="none"
+              autoCorrect={false}
+              mode="outlined"
+              maxLength={36}
+              left={<TextInput.Icon icon="at" />}
+              style={styles.modalInput}
+            />
+
+            {nameError && (
+              <HelperText type="error" visible={!!nameError}>
+                {nameError}
+              </HelperText>
+            )}
+
+            <View style={styles.modalActions}>
+              <Button mode="text" onPress={closeNameModal}>
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleUpdateName}
+                loading={nameLoading}
+                disabled={nameLoading}
+                style={styles.modalSaveBtn}
+              >
+                Guardar
+              </Button>
+            </View>
+          </Surface>
+        </Modal>
+
+        {/* Modal Cambiar Contraseña */}
         <Modal
           visible={visible}
           onDismiss={closeModal}
-          contentContainerStyle={[
-            styles.modal,
-            { backgroundColor: theme.colors.surface },
-          ]}
+          contentContainerStyle={styles.modalOverlay}
         >
-          <Text variant="titleLarge" style={{ fontWeight: "700", marginBottom: 4 }}>
-            Cambiar contraseña
-          </Text>
-
-          <Text variant="bodySmall" style={{ opacity: 0.7, marginBottom: 16 }}>
-            Ingresa tu contraseña actual y define tu nueva clave
-          </Text>
-
-          <TextInput
-            label="Contraseña actual"
-            secureTextEntry={!showCurrentPass}
-            value={currentPassword}
-            onChangeText={setCurrentPassword}
-            mode="outlined"
-            left={<TextInput.Icon icon="lock-outline" />}
-            right={
-              <TextInput.Icon
-                icon={showCurrentPass ? "eye-off-outline" : "eye-outline"}
-                onPress={() => setShowCurrentPass(!showCurrentPass)}
-              />
-            }
-            style={{ marginBottom: 12 }}
-          />
-
-          <TextInput
-            label="Nueva contraseña"
-            secureTextEntry={!showNewPass}
-            value={newPassword}
-            onChangeText={setNewPassword}
-            mode="outlined"
-            left={<TextInput.Icon icon="lock-check-outline" />}
-            right={
-              <TextInput.Icon
-                icon={showNewPass ? "eye-off-outline" : "eye-outline"}
-                onPress={() => setShowNewPass(!showNewPass)}
-              />
-            }
-          />
-
-          {error && (
-            <HelperText type="error" visible={!!error}>
-              {error}
-            </HelperText>
-          )}
-
-          {success && (
-            <Text style={{ color: "#22c55e", marginTop: 8, fontWeight: "600" }}>
-              ✅ Contraseña actualizada. Redirigiendo...
-            </Text>
-          )}
-
-          <Button
-            mode="contained"
-            onPress={handleChangePassword}
-            loading={loading}
-            disabled={loading || success}
-            style={{ marginTop: 16, borderRadius: 12 }}
-            contentStyle={{ height: 48 }}
+          <Surface
+            style={[
+              styles.surfaceCard,
+              { backgroundColor: theme.colors.elevation.level3 },
+            ]}
+            elevation={4}
           >
-            Guardar cambios
-          </Button>
+            <Text variant="titleLarge" style={styles.modalTitle}>
+              Cambiar contraseña
+            </Text>
 
-          <Button mode="text" onPress={closeModal} style={{ marginTop: 8 }}>
-            Cancelar
-          </Button>
+            <Text variant="bodySmall" style={styles.modalSubtitle}>
+              Ingresa tu contraseña actual y define tu nueva clave
+            </Text>
+
+            <TextInput
+              label="Contraseña actual"
+              secureTextEntry={!showCurrentPass}
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              mode="outlined"
+              left={<TextInput.Icon icon="lock-outline" />}
+              right={
+                <TextInput.Icon
+                  icon={showCurrentPass ? "eye-off-outline" : "eye-outline"}
+                  onPress={() => setShowCurrentPass(!showCurrentPass)}
+                />
+              }
+              style={styles.modalInput}
+            />
+
+            <TextInput
+              label="Nueva contraseña"
+              secureTextEntry={!showNewPass}
+              value={newPassword}
+              onChangeText={setNewPassword}
+              mode="outlined"
+              left={<TextInput.Icon icon="lock-check-outline" />}
+              right={
+                <TextInput.Icon
+                  icon={showNewPass ? "eye-off-outline" : "eye-outline"}
+                  onPress={() => setShowNewPass(!showNewPass)}
+                />
+              }
+              style={styles.modalInput}
+            />
+
+            {error && (
+              <HelperText type="error" visible={!!error}>
+                {error}
+              </HelperText>
+            )}
+
+            {success && (
+              <Text style={{ color: "#22c55e", marginTop: 8, fontWeight: "600" }}>
+                ✅ Contraseña actualizada. Redirigiendo...
+              </Text>
+            )}
+
+            <View style={styles.modalActions}>
+              <Button mode="text" onPress={closeModal}>
+                Cancelar
+              </Button>
+              <Button
+                mode="contained"
+                onPress={handleChangePassword}
+                loading={loading}
+                disabled={loading || success}
+                style={styles.modalSaveBtn}
+              >
+                Guardar cambios
+              </Button>
+            </View>
+          </Surface>
         </Modal>
       </Portal>
 
@@ -195,11 +317,28 @@ export default function ProfileScreen() {
             color={theme.colors.onPrimaryContainer}
           />
           <View style={styles.profileDetails}>
-            <Text variant="titleMedium" style={{ fontWeight: "700" }}>
-              {user?.email || "Usuario"}
-            </Text>
-            <Text variant="bodySmall" style={{ opacity: 0.6, marginTop: 2 }}>
-              ID: {user?.$id ? `${user.$id.slice(0, 10)}...` : ""}
+            <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
+              <Text
+                variant="headlineSmall"
+                style={{
+                  color: theme.colors.primary,
+                  fontWeight: "800",
+                  flex: 1,
+                  letterSpacing: -0.5,
+                }}
+                numberOfLines={1}
+              >
+                @{user?.name || user?.$id || "usuario"}
+              </Text>
+              <IconButton
+                icon="pencil-outline"
+                size={22}
+                onPress={openNameModal}
+                style={{ margin: 0 }}
+              />
+            </View>
+            <Text variant="bodyMedium" style={{ opacity: 0.65, marginTop: 2 }}>
+              {user?.email || ""}
             </Text>
           </View>
         </Card.Content>
@@ -345,10 +484,40 @@ const styles = StyleSheet.create({
     marginTop: 4,
     textAlign: "center",
   },
-  modal: {
-    padding: 24,
-    margin: 20,
+  modalOverlay: {
+    paddingHorizontal: 16,
+    justifyContent: "center", // 👈 Centrado vertical en el medio de la pantalla
+    alignItems: "center",
+    height: "100%",
+  },
+  surfaceCard: {
+    width: "100%",
+    maxWidth: 400,
     borderRadius: 24,
+    paddingHorizontal: 22,
+    paddingTop: 22,
+    paddingBottom: 20,
+  },
+  modalTitle: {
+    fontWeight: "700",
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    opacity: 0.7,
+    marginBottom: 16,
+  },
+  modalInput: {
+    marginBottom: 10,
+  },
+  modalActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-end",
+    marginTop: 18,
+    gap: 8,
+  },
+  modalSaveBtn: {
+    borderRadius: 12,
   },
 });
 

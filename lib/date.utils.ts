@@ -6,17 +6,20 @@ export function calculateAge(dateString: string): number {
 
   const today = new Date();
 
-  const birthYear = birth.getUTCFullYear();
-  const birthMonth = birth.getUTCMonth();
-  const birthDay = birth.getUTCDate();
-
-  let age = today.getFullYear() - birthYear;
+  let age = today.getFullYear() - birth.getFullYear();
 
   const hasHadBirthdayThisYear =
-    today.getMonth() > birthMonth ||
-    (today.getMonth() === birthMonth && today.getDate() >= birthDay);
+    today.getMonth() > birth.getMonth() ||
+    (today.getMonth() === birth.getMonth() && today.getDate() >= birth.getDate());
 
   if (!hasHadBirthdayThisYear) age--;
 
-  return age;
+  return Math.max(0, age);
+}
+
+export function formatBirthDate(dateString: string): string {
+  if (!dateString) return "";
+  const birth = new Date(dateString);
+  if (isNaN(birth.getTime())) return "";
+  return birth.toLocaleDateString("es-AR");
 }

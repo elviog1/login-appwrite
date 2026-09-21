@@ -1,9 +1,9 @@
 import "react-native-url-polyfill/auto";
 import { Account, Client, Databases, TablesDB } from "react-native-appwrite";
 
-const ENDPOINT = process.env.EXPO_PUBLIC_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
-const PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID || "697992680031f91b31f1";
-const PLATFORM = process.env.EXPO_PUBLIC_PLATFORM || "com.ideas";
+export const ENDPOINT = process.env.EXPO_PUBLIC_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
+export const PROJECT_ID = process.env.EXPO_PUBLIC_PROJECT_ID || "697992680031f91b31f1";
+export const PLATFORM = process.env.EXPO_PUBLIC_PLATFORM || "com.ideas";
 
 const client = new Client();
 client
